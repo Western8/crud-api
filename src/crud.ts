@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { users } from './index.ts';
-import { IUser, IUsersResult } from './types.ts';
+import { IUser, IUserNew, IUsersResult } from './types.ts';
 
 export function getUsers(id: string | null = null): IUsersResult {
   const result: IUsersResult = {
@@ -27,11 +27,25 @@ export function getUsers(id: string | null = null): IUsersResult {
   return result;
 }
 
-function generateUUID(): string {
-  return crypto.randomUUID();
+export function createUser(objUser: IUserNew): IUser {
+  const newUser: IUser = {
+    id: crypto.randomUUID(),
+    username: objUser.username,
+    age: objUser.age,
+    hobbies: objUser.hobbies,
+  }
+  users.push(newUser);
+  return newUser;
 }
 
-function isUUID(uuid: string): boolean {
+export function updateUser(objUser: IUserNew, user: IUser): IUser {
+  user.username = objUser.username;
+  user.age = objUser.age;
+  user.hobbies = objUser.hobbies;
+  return user;
+}
+
+export function isUUID(uuid: string): boolean {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return regex.test(uuid);
 }

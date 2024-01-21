@@ -1,26 +1,35 @@
 import http from 'http';
-import { getUsers } from './crud';
-import { IUsersResult } from './types';
+import { getUsers, createUser, isUUID, updateUser } from './crud';
+import { IUser, IUserNew, IUsersResult } from './types';
 
-export const server: http.Server = http.createServer( (req, res) => {
+export const server: http.Server = http.createServer((req, res) => {
   const method = req.method?.toUpperCase();
   const url = req.url;
   const params = url?.split('/');
 
-  switch(method) {
+  if (!(params && params[1] === 'api' && params[2] === 'users')) {
+    response404(res);
+    return;
+  }
+
+  switch (method) {
     case 'GET':
-      if (params && params[1] === 'api' && params[2] === 'users') {
-        if (params[3]) {
-          responseUsers(res, params[3]);
-        } else {
-          responseUsers(res);
-        }
+      if (params[3]) {
+        responseUsers(res, params[3]);
       } else {
-        response404(res);
+        responseUsers(res);
       }
       break;
-    
-    default: 
+
+    case 'POST':
+      responseNewUser(req, res);
+      break;
+
+    case 'PUT':
+      responseUpdateUser(req, res, params[3]);
+      break;
+
+    default:
   }
   //res.end(JSON.stringify(users));
 })
@@ -35,8 +44,87 @@ function response404(res: http.ServerResponse) {
   res.end();
 }
 
-function responseUsers(res: http.ServerResponse, id?: string) {
+function responseUsers(res: http.ServerResponse, id?: string): void {
   const usersResult: IUsersResult = getUsers(id);
   res.writeHead(usersResult.code);
   res.end(JSON.stringify(usersResult.message || usersResult.users));
+}
+
+function responseNewUser(req: http.IncomingMessage, res: http.ServerResponse): void {
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
+  req.on('end', () => {
+    let objUser: IUserNew = {
+      username: '',
+      age: 0,
+      hobbies: [],
+    };
+    let keys: string[] = [];
+    try {
+      objUser = JSON.parse(body);
+      keys = Object.keys(objUser);
+    } catch {
+      res.writeHead(400, "Incorrect users fields");
+      res.end();
+      return;
+    }
+
+
+    if (!(keys.includes('username') && keys.includes('age') && keys.includes('hobbies'))) {
+      res.writeHead(400, "Incorrect users fields");
+      res.end();
+      return;
+    }
+
+    const newUser: IUser = createUser(objUser);
+    res.writeHead(201);
+    res.end(JSON.stringify(newUser));
+  })
+}
+
+function responseUpdateUser(req: http.IncomingMessage, res: http.ServerResponse, id: string): void {
+  if ((id === undefined) || !isUUID(id)) {
+    res.writeHead(400, "Invalid user id");
+    res.end();
+    return;
+  }
+
+  const usersResult: IUsersResult = getUsers(id);
+  if (usersResult.code === 404) {
+    res.writeHead(usersResult.code);
+    res.end(usersResult.message);
+  }
+
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
+  req.on('end', () => {
+    let objUser: IUserNew = {
+      username: '',
+      age: 0,
+      hobbies: [],
+    };
+    let keys: string[] = [];
+    try {
+      objUser = JSON.parse(body);
+      keys = Object.keys(objUser);
+    } catch {
+      res.writeHead(400, "Incorrect users fields");
+      res.end();
+      return;
+    }
+
+    if (!(keys.includes('username') && keys.includes('age') && keys.includes('hobbies'))) {
+      res.writeHead(400, "Incorrect users fields");
+      res.end();
+      return;
+    }
+
+    const updatedUser: IUser = updateUser(objUser, usersResult.users[0]);
+    res.writeHead(201);
+    res.end(JSON.stringify(updatedUser));
+  })
 }

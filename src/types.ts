@@ -7,6 +7,12 @@ export interface IUser {
   hobbies: string[];
 }
 
+export interface IUserNew {
+  username: string;
+  age: number;
+  hobbies: string[];
+}
+
 export interface IUsersResult {
   code: number;
   message?: string;
