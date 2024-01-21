@@ -45,6 +45,13 @@ export function updateUser(objUser: IUserNew, user: IUser): IUser {
   return user;
 }
 
+export function deleteUser(user: IUser): void {
+  const index = users.findIndex(item => item.id === user.id);
+  if (index > -1) {
+    users.splice(index, 1);
+  }
+}
+
 export function isUUID(uuid: string): boolean {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return regex.test(uuid);

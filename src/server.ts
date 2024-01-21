@@ -1,5 +1,5 @@
 import http from 'http';
-import { getUsers, createUser, isUUID, updateUser } from './crud';
+import { getUsers, createUser, isUUID, updateUser, deleteUser } from './crud';
 import { IUser, IUserNew, IUsersResult } from './types';
 
 export const server: http.Server = http.createServer((req, res) => {
@@ -29,9 +29,12 @@ export const server: http.Server = http.createServer((req, res) => {
       responseUpdateUser(req, res, params[3]);
       break;
 
-    default:
+    case 'DELETE':
+      responseDeleteUser(req, res, params[3]);
+      break;
+
+    //default:
   }
-  //res.end(JSON.stringify(users));
 })
 
 const port: number = (process.env.PORT) && Number.isInteger(+process.env.PORT) ? +process.env.PORT : 4000;
@@ -95,6 +98,7 @@ function responseUpdateUser(req: http.IncomingMessage, res: http.ServerResponse,
   if (usersResult.code === 404) {
     res.writeHead(usersResult.code);
     res.end(usersResult.message);
+    return;
   }
 
   let body = '';
@@ -127,4 +131,23 @@ function responseUpdateUser(req: http.IncomingMessage, res: http.ServerResponse,
     res.writeHead(201);
     res.end(JSON.stringify(updatedUser));
   })
+}
+
+function responseDeleteUser(req: http.IncomingMessage, res: http.ServerResponse, id: string): void {
+  if ((id === undefined) || !isUUID(id)) {
+    res.writeHead(400, "Invalid user id");
+    res.end();
+    return;
+  }
+
+  const usersResult: IUsersResult = getUsers(id);
+  if (usersResult.code === 404) {
+    res.writeHead(usersResult.code);
+    res.end(usersResult.message);
+    return;
+  }
+
+  deleteUser(usersResult.users[0]);
+  res.writeHead(204, 'User has been deleted');
+  res.end();
 }
