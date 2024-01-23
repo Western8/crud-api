@@ -74,7 +74,6 @@ function responseNewUser(req: http.IncomingMessage, res: http.ServerResponse): v
       return;
     }
 
-
     if (!(keys.includes('username') && keys.includes('age') && keys.includes('hobbies'))) {
       res.writeHead(400, "Incorrect users fields");
       res.end();

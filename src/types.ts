@@ -20,7 +20,7 @@ export interface IUsersResult {
 }
 
 
-export const usersFefault: IUser[] = [
+export const usersDefault: IUser[] = [
   {
     id: '013dba00-8969-4c97-8de7-528738d1f295',
     username: 'John',
@@ -39,7 +39,7 @@ export const usersFefault: IUser[] = [
   {
     id: 'ea82e269-486b-4757-a74e-5b4348111fd5',
     username: 'Smith',
-    age: 2,
+    age: 22,
     hobbies: [
       'mushrooms',
       'singer',
