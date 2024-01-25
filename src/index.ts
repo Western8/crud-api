@@ -11,4 +11,4 @@ export const parseArgs = (): Boolean => {
 
 export const modeMulti: Boolean = parseArgs();
 
-import './server.ts';
+import './server';

@@ -1,7 +1,7 @@
 import http from 'http';
 import { getUsers, createUser, isUUID, updateUser, deleteUser } from './crud';
 import { IUser, IUserNew, IUsersResult, IUsersMessage } from './types';
-import { users } from './index.ts';
+import { users } from './index';
 import { modeMulti } from './index';
 import cluster, { Cluster, Worker } from 'cluster';
 import os from 'os';

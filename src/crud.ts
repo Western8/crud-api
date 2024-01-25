@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { users } from './index.ts';
-import { IUser, IUserNew, IUsersResult } from './types.ts';
+import { users } from './index';
+import { IUser, IUserNew, IUsersResult } from './types';
 
 export function getUsers(id: string | null = null): IUsersResult {
   const result: IUsersResult = {
