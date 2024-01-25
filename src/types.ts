@@ -19,6 +19,9 @@ export interface IUsersResult {
   users: IUser[];
 }
 
+export interface IUsersMessage {
+  users: IUser[];
+}
 
 export const usersDefault: IUser[] = [
   {

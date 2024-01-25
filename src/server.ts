@@ -1,46 +1,135 @@
 import http from 'http';
 import { getUsers, createUser, isUUID, updateUser, deleteUser } from './crud';
-import { IUser, IUserNew, IUsersResult } from './types';
+import { IUser, IUserNew, IUsersResult, IUsersMessage } from './types';
+import { users } from './index.ts';
+import { modeMulti } from './index';
+import cluster, { Cluster, Worker } from 'cluster';
+import os from 'os';
+export let server: http.Server;
 
-export const server: http.Server = http.createServer((req, res) => {
-  const method = req.method?.toUpperCase();
-  const url = req.url;
-  const params = url?.split('/');
-
-  if (!(params && params[1] === 'api' && params[2] === 'users')) {
-    response404(res);
-    return;
-  }
-
-  switch (method) {
-    case 'GET':
-      if (params[3]) {
-        responseUsers(res, params[3]);
-      } else {
-        responseUsers(res);
-      }
-      break;
-
-    case 'POST':
-      responseNewUser(req, res);
-      break;
-
-    case 'PUT':
-      responseUpdateUser(req, res, params[3]);
-      break;
-
-    case 'DELETE':
-      responseDeleteUser(req, res, params[3]);
-      break;
-
-    //default:
-  }
-})
-
+const numCPU = os.availableParallelism();
 const port: number = (process.env.PORT) && Number.isInteger(+process.env.PORT) ? +process.env.PORT : 4000;
-server.listen(port, () => {
-  console.log(`Server is running by http://localhost:${port}`);
-});
+let portCounter = port;
+
+if (modeMulti && cluster.isPrimary) {
+  const workers: Worker[] = [];
+  for (let i = 1; i < numCPU; i++) {
+    const worker = cluster.fork({ PORT: port + i });
+    workers.push(worker);
+  }
+
+  cluster.on('message', (worker, message) => {
+    if (message.users) {
+      const usersFromWorker: IUser[] = message.users;
+      users.length = 0;
+      usersFromWorker.forEach((item) => users.push(item));
+
+      workers.forEach(worker => {
+        worker.send({ users });
+      });
+    }
+  });
+
+  server = http.createServer((req, res) => {
+    console.log(`come request primary on port ${req.socket.localPort}`);
+    portCounter = (portCounter < port + numCPU - 1) ? portCounter + 1 : port + 1;
+
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+
+    const options: http.RequestOptions = {
+      port: portCounter,
+      path: req.url,
+      method: req.method?.toUpperCase(),
+    };
+
+    // Sending the request
+    const request = http.request(options, (resChild) => {
+      let data = '';
+      resChild.on('data', (chunk) => {
+        data += chunk;
+      });
+      const statusCode = resChild.statusCode;
+
+      // Ending the response 
+      resChild.on('end', () => {
+        if (resChild.statusCode) {
+          res.writeHead(resChild.statusCode, resChild.statusMessage);
+        }        
+        res.end(data);
+      });
+
+    }).on("error", (err) => {
+      console.log("Error: ", err)
+    });
+
+    req.on('end', () => {
+      request.write(body);
+      request.end();
+    })
+   });
+
+  server.listen(port, () => {
+    console.log(`Server (primary) is running by http://localhost:${port}`);
+  });
+
+} else {
+  server = http.createServer((req, res) => {
+    const method = req.method?.toUpperCase();
+    const url = req.url;
+    const params = url?.split('/');
+
+    console.log(`come request child on port ${req.socket.localPort}`);
+
+    if (!(params && params[1] === 'api' && params[2] === 'users')) {
+      response404(res);
+      return;
+    }
+
+    switch (method) {
+      case 'GET':
+        if (params[3]) {
+          responseUsers(res, params[3]);
+        } else {
+          responseUsers(res);
+        }
+        break;
+
+      case 'POST':
+        responseNewUser(req, res);
+        break;
+
+      case 'PUT':
+        responseUpdateUser(req, res, params[3]);
+        break;
+
+      case 'DELETE':
+        responseDeleteUser(req, res, params[3]);
+        break;
+
+      //default:
+    }
+
+    req.on('end', () => {
+      cluster.worker?.send({ users });
+    });
+
+  });
+
+  process.on('message', (message: IUsersMessage) => {
+    if (message.users) {
+      const usersFromPrimary: IUser[] = message.users;
+      users.length = 0;
+      usersFromPrimary.forEach((item) => users.push(item));
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`Server (child) is running by http://localhost:${port}`);
+  });
+}
 
 function response404(res: http.ServerResponse) {
   res.writeHead(404, "Resource not found");
@@ -58,6 +147,7 @@ function responseNewUser(req: http.IncomingMessage, res: http.ServerResponse): v
   req.on('data', chunk => {
     body += chunk.toString();
   });
+
   req.on('end', () => {
     let objUser: IUserNew = {
       username: '',

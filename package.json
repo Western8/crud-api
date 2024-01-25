@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start:dev": "ts-node-dev --env-file --exit-child src/index.ts",
+    "start:multi": "ts-node-dev --env-file --exit-child src/index.ts --multi",
     "start:prod": "ts-node --env-file src/index.ts",
     "test": "jest"
   },
