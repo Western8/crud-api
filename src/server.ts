@@ -88,28 +88,33 @@ if (modeMulti && cluster.isPrimary) {
       return;
     }
 
-    switch (method) {
-      case 'GET':
-        if (params[3]) {
-          responseUsers(res, params[3]);
-        } else {
-          responseUsers(res);
-        }
-        break;
+    try {
+      switch (method) {
+        case 'GET':
+          if (params[3]) {
+            responseUsers(res, params[3]);
+          } else {
+            responseUsers(res);
+          }
+          break;
+  
+        case 'POST':
+          responseNewUser(req, res);
+          break;
+  
+        case 'PUT':
+          responseUpdateUser(req, res, params[3]);
+          break;
+  
+        case 'DELETE':
+          responseDeleteUser(req, res, params[3]);
+          break;
+  
+        //default:
+      }
 
-      case 'POST':
-        responseNewUser(req, res);
-        break;
-
-      case 'PUT':
-        responseUpdateUser(req, res, params[3]);
-        break;
-
-      case 'DELETE':
-        responseDeleteUser(req, res, params[3]);
-        break;
-
-      //default:
+    } catch (err) {
+      response500(res, (err instanceof Error) ? err.message : '');
     }
 
     req.on('end', () => {
@@ -134,6 +139,11 @@ if (modeMulti && cluster.isPrimary) {
 function response404(res: http.ServerResponse) {
   res.writeHead(404, "Resource not found");
   res.end();
+}
+
+function response500(res: http.ServerResponse, err: string) {
+  res.writeHead(500, "Error on the server side");
+  res.end(err);
 }
 
 function responseUsers(res: http.ServerResponse, id?: string): void {
