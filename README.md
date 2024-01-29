@@ -12,6 +12,7 @@
 ### List of project scripts
 
 -   start:dev : starts development server which will track code changes
+-   start:multi : starts multiple instances of the application with load balancer
 -   start:prod : compile all the project files into compressed bundle to publisher
 -   test : run jest tests written for application source code
 
