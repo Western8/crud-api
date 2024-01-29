@@ -23,6 +23,7 @@ const baseConfig = {
     },
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
+        
         fallback: {
             "fs": false,
             "tls": false,
@@ -37,6 +38,7 @@ const baseConfig = {
             "cluster": false,
         }
     },
+    target: 'node',
     output: {
         filename: 'main.js',
         path: path.resolve(__dirname, 'dist'),
