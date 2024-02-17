@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:dev": "ts-node-dev --env-file --exit-child src/index.ts",
-    "start:multi": "ts-node-dev --env-file --exit-child src/index.ts --multi",
+    "start:dev": "ts-node-dev --exit-child src/index.ts",
+    "start:multi": "ts-node-dev --exit-child src/index.ts --multi",
     "start:prod": "npm run build && ts-node dist/main.js",
     "build": "webpack --config ./webpack.config.js --env mode=prod",
     "dev": "webpack --config ./webpack.config.js --env mode=dev",
